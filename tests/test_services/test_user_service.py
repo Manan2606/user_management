@@ -5,6 +5,9 @@ from app.dependencies import get_settings
 from app.models.user_model import User, UserRole
 from app.services.user_service import UserService
 from app.utils.nickname_gen import generate_nickname
+from unittest.mock import MagicMock
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 
 pytestmark = pytest.mark.asyncio
 
@@ -161,3 +164,66 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+@pytest.fixture
+def mock_db_session():
+    return MagicMock(AsyncSession)
+
+# Test updating user profile with partial data
+async def test_profile_update_partial_data(db_session, user):
+    partial_data = {"first_name": "NewFirstName"}  # Only updating one field
+    updated_user = await UserService.profile_update(db_session, user.id, partial_data)
+    assert updated_user is not None
+    assert updated_user.first_name == "NewFirstName"
+    assert updated_user.last_name == user.last_name  # last_name should remain the same
+
+# Test updating user profile with invalid data
+async def test_profile_update_invalid_data(db_session, user):
+    invalid_data = {"first_name": 12345}  # Invalid first_name (should be a string)
+    updated_user = await UserService.profile_update(db_session, user.id, invalid_data)
+    assert updated_user is None
+
+# Test profile update with invalid UUID
+async def test_profile_update_invalid_uuid(db_session):
+    invalid_user_id = "invalid-uuid"  # Invalid UUID format
+    update_data = {"first_name": "UpdatedName"}
+    
+    updated_user = await UserService.profile_update(db_session, invalid_user_id, update_data)
+    assert updated_user is None
+
+# Test listing users with pagination for multiple pages
+async def test_list_users_multiple_pages(db_session, users_with_same_role_50_users):
+    users_page_1 = await UserService.list_users(db_session, skip=0, limit=10)
+    users_page_2 = await UserService.list_users(db_session, skip=10, limit=10)
+    
+    assert len(users_page_1) == 10
+    assert len(users_page_2) == 10
+    assert users_page_1[0].id != users_page_2[0].id  # Ensure that the users in page 1 and page 2 are distinct
+
+# Test account locking with invalid login attempts
+async def test_account_lock_with_invalid_logins(db_session, verified_user):
+    max_login_attempts = get_settings().max_login_attempts
+    for _ in range(max_login_attempts):
+        await UserService.login_user(db_session, verified_user.email, "wrongpassword")
+    
+    is_locked = await UserService.is_account_locked(db_session, verified_user.email)
+    assert is_locked is True, "User account should be locked after max failed login attempts."
+
+# Test user registration with missing email
+async def test_register_user_missing_email(db_session, email_service):
+    user_data = {
+        "password": "ValidPassword123!",
+        "role": UserRole.ADMIN.name
+    }
+    user = await UserService.register_user(db_session, user_data, email_service)
+    assert user is None  # Registration should fail due to missing email
+
+# Test user registration with invalid email format
+async def test_register_user_invalid_email_format(db_session, email_service):
+    user_data = {
+        "email": "invalidemailformat",
+        "password": "ValidPassword123!",
+        "role": UserRole.ADMIN.name
+    }
+    user = await UserService.register_user(db_session, user_data, email_service)
+    assert user is None  # Registration should fail due to invalid email format

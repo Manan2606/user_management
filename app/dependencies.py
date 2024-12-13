@@ -8,6 +8,7 @@ from app.services.email_service import EmailService
 from app.services.jwt_service import decode_token
 from settings.config import Settings
 from fastapi import Depends
+from app.schemas.user_schemas import UserProfileUpdate  # Import UserProfileUpdate schema
 
 def get_settings() -> Settings:
     """Return application settings."""
@@ -25,7 +26,6 @@ async def get_db() -> AsyncSession:
             yield session
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -50,3 +50,12 @@ def require_role(role: str):
             raise HTTPException(status_code=403, detail="Operation not permitted")
         return current_user
     return role_checker
+
+# New Dependency to update profile
+async def get_profile_update_data(profile_data: dict = Depends(UserProfileUpdate)):
+    """Dependency to validate and provide profile update data."""
+    try:
+        profile = UserProfileUpdate(**profile_data)  # Use the schema for validation
+        return profile
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid profile update data: {str(e)}")

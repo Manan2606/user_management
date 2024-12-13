@@ -38,9 +38,19 @@ async def test_user_role(db_session, admin_user):
 
 @pytest.mark.asyncio
 async def test_bulk_user_creation_performance(db_session, users_with_same_role_50_users):
+    # Ensure that each user has a unique email
+    for i, user in enumerate(users_with_same_role_50_users):
+        user.email = f"user_{i+1}@example.com"  # Unique email for each user
+    
+    # Commit users to the database (assuming they are added to the session properly)
+    db_session.add_all(users_with_same_role_50_users)
+    await db_session.commit()
+
+    # Now, let's query and assert that we have 50 users with the same role
     result = await db_session.execute(select(User).filter_by(role=UserRole.AUTHENTICATED))
     users = result.scalars().all()
     assert len(users) == 50
+
 
 @pytest.mark.asyncio
 async def test_password_hashing(user):
