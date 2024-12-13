@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.dependencies import get_settings
 from app.models.user_model import User, UserRole
 from app.services.user_service import UserService
-from app.utils.nickname_gen import generate_nickname
+from app.utils.nickname_gen import generate_nickname_with_id
 from unittest.mock import MagicMock
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
@@ -14,7 +14,7 @@ pytestmark = pytest.mark.asyncio
 # Test creating a user with valid data
 async def test_create_user_with_valid_data(db_session, email_service):
     user_data = {
-        "nickname": generate_nickname(),
+        "nickname": generate_nickname_with_id(),
         "email": "valid_user@example.com",
         "password": "ValidPassword123!",
         "role": UserRole.ADMIN.name
@@ -98,7 +98,7 @@ async def test_list_users_with_pagination(db_session, users_with_same_role_50_us
 # Test registering a user with valid data
 async def test_register_user_with_valid_data(db_session, email_service):
     user_data = {
-        "nickname": generate_nickname(),
+        "nickname": generate_nickname_with_id(),
         "email": "register_valid_user@example.com",
         "password": "RegisterValid123!",
         "role": UserRole.ADMIN

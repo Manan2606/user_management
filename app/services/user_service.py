@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_email_service, get_settings
 from app.models.user_model import User
 from app.schemas.user_schemas import UserCreate, UserUpdate, UserProfileUpdate
-from app.utils.nickname_gen import generate_nickname
+from app.utils.nickname_gen import generate_nickname_with_id
 from app.utils.security import generate_verification_token, hash_password, verify_password
 from uuid import UUID
 from app.services.email_service import EmailService
@@ -63,9 +63,9 @@ class UserService:
             new_user = User(**validated_data)
             
             # Generate a unique nickname
-            new_nickname = generate_nickname()
+            new_nickname = generate_nickname_with_id()
             while await cls.get_by_nickname(session, new_nickname):
-                new_nickname = generate_nickname()
+                new_nickname = generate_nickname_with_id()
             new_user.nickname = new_nickname
 
             # Assign user role
