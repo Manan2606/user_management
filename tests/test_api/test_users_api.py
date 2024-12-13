@@ -3,7 +3,7 @@ import pytest
 from httpx import AsyncClient
 from app.main import app
 from app.models.user_model import User, UserRole
-from app.utils.nickname_gen import generate_nickname
+from app.utils.nickname_gen import generate_nickname_with_id
 from app.utils.security import hash_password
 from app.services.jwt_service import decode_token  # Import your FastAPI app
 from urllib.parse import urlencode
@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 async def test_create_user_access_denied(async_client, user_token, email_service):
     headers = {"Authorization": f"Bearer {user_token}"}
     user_data = {
-        "nickname": generate_nickname(),
+        "nickname": generate_nickname_with_id(),
         "email": "test@example.com",
         "password": "sS#fdasrongPassword123!",
     }
@@ -261,7 +261,7 @@ async def test_update_user_profile_success(async_client, admin_user, admin_token
 async def test_create_user_access_denied(async_client, user_token, email_service):
     headers = {"Authorization": f"Bearer {user_token}"}
     user_data = {
-        "nickname": generate_nickname(),
+        "nickname": generate_nickname_with_id(),
         "email": "test@example.com",
         "password": "sS#fdasrongPassword123!",
     }

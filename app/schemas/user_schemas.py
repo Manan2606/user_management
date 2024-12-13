@@ -6,7 +6,7 @@ from enum import Enum
 import uuid
 import re
 from app.models.user_model import UserRole
-from app.utils.nickname_gen import generate_nickname
+from app.utils.nickname_gen import generate_nickname_with_id
 
 
 def validate_url(url: Optional[str]) -> Optional[str]:
@@ -19,7 +19,7 @@ def validate_url(url: Optional[str]) -> Optional[str]:
 
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="john.doe@example.com")
-    nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname())
+    nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname_with_id())
     first_name: Optional[str] = Field(None, example="John")
     last_name: Optional[str] = Field(None, example="Doe")
     bio: Optional[str] = Field(None, example="Experienced software developer specializing in web applications.")
@@ -58,7 +58,7 @@ class UserUpdate(UserBase):
 class UserResponse(UserBase):
     id: uuid.UUID = Field(..., example=uuid.uuid4())
     email: EmailStr = Field(..., example="john.doe@example.com")
-    nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname())    
+    nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname_with_id())    
     is_professional: Optional[bool] = Field(default=False, example=True)
     role: UserRole
 
@@ -72,7 +72,7 @@ class ErrorResponse(BaseModel):
 
 class UserListResponse(BaseModel):
     items: List[UserResponse] = Field(..., example=[{
-        "id": uuid.uuid4(), "nickname": generate_nickname(), "email": "john.doe@example.com",
+        "id": uuid.uuid4(), "nickname": generate_nickname_with_id(), "email": "john.doe@example.com",
         "first_name": "John", "bio": "Experienced developer", "role": "AUTHENTICATED",
         "last_name": "Doe", "bio": "Experienced developer", "role": "AUTHENTICATED",
         "profile_picture_url": "https://example.com/profiles/john.jpg", 
