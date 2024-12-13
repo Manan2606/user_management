@@ -161,8 +161,24 @@ class UserService:
         return user.is_locked if user else False
 
 
+        
     @classmethod
     async def reset_password(cls, session: AsyncSession, user_id: UUID, new_password: str) -> bool:
+        # Password validation
+        if len(new_password) < 8:
+            logger.error("Password must be at least 8 characters long.")
+            return False
+        if not any(char.isdigit() for char in new_password):
+            logger.error("Password must contain at least one digit.")
+            return False
+        if not any(char.isupper() for char in new_password):
+            logger.error("Password must contain at least one uppercase letter.")
+            return False
+        if not any(char in '!@#$%^&*()-_=+[]{}|;:,.<>?/~' for char in new_password):
+            logger.error("Password must contain at least one special character.")
+            return False
+
+        # Proceed with hashing and updating the password
         hashed_password = hash_password(new_password)
         user = await cls.get_by_id(session, user_id)
         if user:
@@ -173,6 +189,7 @@ class UserService:
             await session.commit()
             return True
         return False
+        
 
     @classmethod
     async def verify_email_with_token(cls, session: AsyncSession, user_id: UUID, token: str) -> bool:
