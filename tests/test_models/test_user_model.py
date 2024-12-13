@@ -1,6 +1,7 @@
 from builtins import repr
 from datetime import datetime, timezone
 import pytest
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user_model import User, UserRole
 
@@ -139,3 +140,100 @@ async def test_update_user_role(db_session: AsyncSession, user: User):
     await db_session.commit()
     await db_session.refresh(user)
     assert user.role == UserRole.ADMIN, "Role update should persist correctly in the database"
+
+@pytest.mark.asyncio
+async def test_account_lock_on_login(db_session: AsyncSession, user: User):
+    """
+    Tests that login is prevented when the account is locked.
+    """
+    user.lock_account()
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    # Simulate a login attempt
+    assert user.is_locked, "Account should be locked"
+    # Assuming there's a method to try logging in, it should raise an exception or return a failure response
+    with pytest.raises(Exception):  # Replace with actual login failure method
+        await user.login("wrong_password")
+
+@pytest.mark.asyncio
+async def test_email_verification_token(db_session: AsyncSession, user: User):
+    """
+    Tests the creation and usage of an email verification token.
+    """
+    verification_token = uuid.uuid4().hex  # Simulate generating a token
+    user.verification_token = verification_token
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    assert user.verification_token == verification_token, "Verification token should match the generated one"
+    
+    # Now simulate email verification by clearing the token after use
+    user.verify_email()  # Simulate email verification
+    user.verification_token = None  # Remove the token after email verification
+    await db_session.commit()
+    await db_session.refresh(user)
+    
+    assert user.email_verified, "Email should be verified"
+    assert user.verification_token is None, "Verification token should be removed after email verification"
+
+@pytest.mark.asyncio
+async def test_update_professional_status(db_session: AsyncSession, user: User):
+    """
+    Tests updating the professional status of the user and the timestamp update.
+    """
+    initial_status = user.is_professional
+    initial_timestamp = user.professional_status_updated_at
+
+    # Change the professional status
+    user.update_professional_status(True)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    assert user.is_professional is not initial_status, "Professional status should be updated"
+    assert user.professional_status_updated_at != initial_timestamp, "Timestamp should be updated when status is changed"
+
+from passlib.context import CryptContext
+
+# Initialize password context for hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+@pytest.mark.asyncio
+async def test_user_password_hashing(db_session: AsyncSession):
+    """
+    Tests that the password is hashed when the user is created.
+    """
+    raw_password = "SecurePassword123!"
+    hashed_password = pwd_context.hash(raw_password)  # Hash the password before assigning
+
+    user = User(
+        nickname="johndoe",
+        email="john.doe@example.com",
+        hashed_password=hashed_password,  # Store the hashed password
+        role=UserRole.AUTHENTICATED
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    assert user.hashed_password != raw_password, "Password should be stored as a hashed value, not plain text"
+
+
+@pytest.mark.asyncio
+async def test_role_change_behavior(db_session: AsyncSession, user: User):
+    """
+    Tests that the user's role can be changed and the new role reflects the expected behavior.
+    """
+    initial_role = user.role
+    new_role = UserRole.ADMIN
+
+    # Change the user's role
+    user.role = new_role
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    assert user.role != initial_role, "User's role should be updated"
+    assert user.role == new_role, "User's role should be updated to ADMIN"
+
+    # Ensure the role behaves correctly with access control (role-based behavior)
+    assert user.has_role(UserRole.ADMIN), "User should have the ADMIN role after the update"

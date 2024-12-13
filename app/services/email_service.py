@@ -35,3 +35,9 @@ class EmailService:
             "verification_url": verification_url,
             "email": user.email
         }, 'email_verification')
+        
+    async def send_professional_upgrade_notification(self, user: User):
+        # You can define the email subject and content for the professional upgrade
+        subject = "Congratulations on Becoming a Professional!"
+        html_content = self.template_manager.render_template('professional_upgrade', name=user.first_name)
+        self.smtp_client.send_email(subject, html_content, user.email)

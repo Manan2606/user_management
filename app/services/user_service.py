@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_email_service, get_settings
 from app.models.user_model import User
-from app.schemas.user_schemas import UserCreate, UserUpdate
+from app.schemas.user_schemas import UserCreate, UserUpdate, UserProfileUpdate
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import generate_verification_token, hash_password, verify_password
 from uuid import UUID
@@ -200,3 +200,33 @@ class UserService:
             await session.commit()
             return True
         return False
+    
+    @classmethod
+    async def profile_update(
+        cls, 
+        session: AsyncSession, 
+        user_id: UUID, 
+        profile_data: Dict[str, Optional[str]]
+    ) -> Optional[User]:
+        try:
+            validated_data = UserProfileUpdate(**profile_data).model_dump(exclude_unset=True)
+
+            user = await cls.get_by_id(session, user_id)
+            if not user:
+                logger.error(f"User with ID {user_id} not found.")
+                return None
+
+            for key, value in validated_data.items():
+                if value is not None:
+                    setattr(user, key, value)
+
+            session.add(user)
+            await session.commit()
+            logger.info(f"User profile {user_id} updated successfully.")
+            return user
+
+        except ValidationError as e:
+            logger.error(f"Validation error during profile update: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error during profile update: {e}")
+        return None

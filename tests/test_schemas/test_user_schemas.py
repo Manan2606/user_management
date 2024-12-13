@@ -2,7 +2,7 @@ import uuid
 import pytest
 from pydantic import ValidationError
 from datetime import datetime
-from app.schemas.user_schemas import UserBase, UserCreate, UserUpdate, UserResponse, UserListResponse, LoginRequest
+from app.schemas.user_schemas import UserBase, UserCreate, UserUpdate, UserResponse, UserListResponse, LoginRequest, UserProfileUpdate
 
 # Fixtures for common test data
 @pytest.fixture
@@ -43,9 +43,6 @@ def user_response_data(user_base_data):
         "last_name": user_base_data["last_name"],
         "role": user_base_data["role"],
         "email": user_base_data["email"],
-        # "last_login_at": datetime.now(),
-        # "created_at": datetime.now(),
-        # "updated_at": datetime.now(),
         "links": []
     }
 
@@ -65,6 +62,11 @@ def test_user_create_valid(user_create_data):
     assert user.nickname == user_create_data["nickname"]
     assert user.password == user_create_data["password"]
 
+def test_user_create_invalid_email(user_create_data):
+    user_create_data["email"] = "invalid-email"
+    with pytest.raises(ValidationError):
+        UserCreate(**user_create_data)
+
 # Tests for UserUpdate
 def test_user_update_valid(user_update_data):
     user_update = UserUpdate(**user_update_data)
@@ -75,7 +77,6 @@ def test_user_update_valid(user_update_data):
 def test_user_response_valid(user_response_data):
     user = UserResponse(**user_response_data)
     assert user.id == user_response_data["id"]
-    # assert user.last_login_at == user_response_data["last_login_at"]
 
 # Tests for LoginRequest
 def test_login_request_valid(login_request_data):
@@ -108,3 +109,40 @@ def test_user_base_url_invalid(url, user_base_data):
     user_base_data["profile_picture_url"] = url
     with pytest.raises(ValidationError):
         UserBase(**user_base_data)
+
+# Test for UserProfileUpdate (when none of the fields are provided)
+def test_user_profile_update_no_field():
+    with pytest.raises(ValueError, match="At least one field must be provided for profile update"):
+        UserProfileUpdate()
+
+# Test for UserProfileUpdate with valid fields
+def test_user_profile_update_valid():
+    update_data = {
+        "first_name": "Jane",
+        "last_name": "Smith",
+        "bio": "Software engineer and tech enthusiast",
+        "profile_picture_url": "https://example.com/profile_pictures/jane.jpg"
+    }
+    user_profile_update = UserProfileUpdate(**update_data)
+    assert user_profile_update.first_name == "Jane"
+    assert user_profile_update.last_name == "Smith"
+    assert user_profile_update.bio == "Software engineer and tech enthusiast"
+    assert user_profile_update.profile_picture_url == "https://example.com/profile_pictures/jane.jpg"
+
+# Test for UserProfileUpdate with invalid URL
+def test_user_profile_update_invalid_url():
+    update_data = {
+        "profile_picture_url": "invalid-url"
+    }
+    with pytest.raises(ValidationError):
+        UserProfileUpdate(**update_data)
+
+# Test for UserProfileUpdate with partial valid fields
+def test_user_profile_update_partial_valid():
+    update_data = {
+        "bio": "Backend developer",
+        "github_profile_url": "https://github.com/janesmith"
+    }
+    user_profile_update = UserProfileUpdate(**update_data)
+    assert user_profile_update.bio == "Backend developer"
+    assert user_profile_update.github_profile_url == "https://github.com/janesmith"
