@@ -9,15 +9,11 @@ User Management System is a Python-based FastAPI application designed to manage 
 - **Description:** Allows users to update their profile fields and enables managers or admins to upgrade users to professional status.  
 - **User Story:**  
   - As a user, I want to manage my profile information and be upgraded to professional status by managers or admins.  
-- **Minimum Viable Feature:**  
+- **Viable Feature:**  
   - Implemented API endpoints for updating user profile fields (e.g., name, bio, location).  
   - Created separate API endpoints for managers and admins to upgrade users to professional status.  
   - Updated the user profile page to display professional status and allow field edits.  
-  - Added notifications for users upon professional status upgrades.  
-- **Optional Enhancements:**  
-  - Profile field validation to ensure data integrity.  
-  - Dynamic addition of profile fields by users.  
-  - User-friendly interface for managers and admins to search and select users for professional status upgrades.  
+  - Added notifications for users upon professional status upgrades. 
 
 ### 🔒 Authentication and Authorization  
 - JWT-based authentication for secure user login.  
