@@ -76,3 +76,5 @@ This project provided valuable insights into designing secure, scalable, and use
 Through this project, I successfully implemented a comprehensive user management system while addressing critical issues and incorporating user feedback. The result is a robust, secure, and user-friendly application.  
 
 ![Docker Hub image](image.png)
+
+Report : [IS601_Report](https://github.com/Manan2606/user_management/blob/main/IS601_Report.docx)
