@@ -42,7 +42,7 @@ User Management System is a Python-based FastAPI application designed to manage 
 
 ## Docker Repository  
 The application is containerized for easy deployment. The Docker image for this project is available on Docker Hub:  
-[Docker Hub Repository - User Management System](https://hub.docker.com/repository/docker/manan2606/user_management/general)  
+[Docker Hub Repository - User Management System](https://hub.docker.com/r/manan2606/user_management/tags)  
 
 ## Issues Solved  
 
